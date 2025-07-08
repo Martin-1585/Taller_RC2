@@ -287,7 +287,7 @@ void prediccion_nivelesfuturo(zone_data *zone) {
     predic_so2 = prom_so2 * (1 +(MAX_HUMIDITY / 130.0 - MAX_VELVIENTO / 80.0));
     predic_co = prom_co * (1 + (MAX_HUMIDITY/150.0));
 
-    printf("\n\x1B[36mPredicción de niveles de contaminación para %s el %s:\x1B[0m\n", zone->zone_name, date_enter);
+    printf("\n\x1B[36mPrediccion de niveles de contaminacion para %s el %s:\x1B[0m\n", zone->zone_name, date_enter);
     printf("------------------------------------------------------------------\n");
     printf("|Contaminante\t| Nivel Actual\t\t|Prediccion en 24 horas\t|\n");
     printf("------------------------------------------------------------------\n");
@@ -437,7 +437,7 @@ void generar_recomendaciones(zone_data *zone) {
             printf("  - Promover confinamiento voluntario en zonas urbanas.\n");
         } else if (score >= 3) {
             printf("\x1B[43m>> ALERTA ALTA: Riesgo para la salud.\x1B[0m\n");
-            printf("  - Reducir tráfico vehicular (pico y placa ampliado).\n");
+            printf("  - Reducir trafico vehicular (pico y placa ampliado).\n");
             printf("  - Limitar actividades al aire libre (escuelas y parques).\n");
             printf("  - Incentivar el teletrabajo y el transporte público.\n");
         } else if (score > 0) {
