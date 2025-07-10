@@ -250,20 +250,19 @@ void prediccion_nivelesfuturo(zone_data *zone) {
             break;
         }
     } while (result_valid != 1);
-
+    //Se pasa la fecha ingresada por el usuario en la fecha siguiente mediante la funcion obtener_fechasiguiente
     time_t prediction = obtener_fechasiguiente(date_enter);
-    time_t beginning = prediction - (30 * 24 *3600);
-    
+    time_t beginning = prediction - (30 * 24 *3600); //A la fecha futura se le resta 30 días para tener una fecha de inicio para realizar la predicción
     for (int i = 0; i < zone->num_data; i++){
-        time_t info_date = convertir_fecha_a_time(zone->daily_data[i].date);
-        if (info_date >= beginning && info_date < prediction) {
-            sum_pm25 += zone->daily_data[i].pm25;
-            sum_pm10 += zone->daily_data[i].pm10;
-            sum_03 += zone->daily_data[i].o3;
-            sum_no2 += zone->daily_data[i].no2;
-            sum_so2 += zone->daily_data[i].so2;
-            sum_co += zone->daily_data[i].co;
-            days_counted++;
+        time_t info_date = convertir_fecha_a_time(zone->daily_data[i].date); // Se transforma la información guardada de la lectura de los últimos 30 días en fechas aceptables para el ordenador
+        if (info_date >= beginning && info_date < prediction) { //Se filtra las fechas, si se enecuntran mayores o iguales a la fecha de inicio (la predicción menos 30 días) entran en el for y si son menores a la fecha de predicción (obnter_fecha_siguiente)
+            sum_pm25 += zone->daily_data[i].pm25; //Se realiza un suma de los datos de pm25 durante los días que esten en el rango delimitado previamente
+            sum_pm10 += zone->daily_data[i].pm10; //Se realiza un suma de los datos de pm10 durante los días que esten en el rango delimitado previamente
+            sum_03 += zone->daily_data[i].o3; //Se realiza un suma de los datos de o3 durante los días que esten en el rango delimitado previamente
+            sum_no2 += zone->daily_data[i].no2; //Se realiza un suma de los datos de no2 durante los días que esten en el rango delimitado previamente
+            sum_so2 += zone->daily_data[i].so2; //Se realiza un suma de los datos de so2 durante los días que esten en el rango delimitado previamente
+            sum_co += zone->daily_data[i].co; //Se realiza un suma de los datos de co durante los días que esten en el rango delimitado previamente
+            days_counted++; //Por cada día registrado se aumenta el paso del contador
         }
     }
     //Si no se posee información acerca de los últimos 30 días se despliega este mensaje
@@ -306,36 +305,35 @@ void alertas_preventivas(zone_data *zone) {
     printf("\n\x1B[31m--- ADVERTENCIAS PREVENTIVAS PARA %s ---\x1B[0m\n", zone->zone_name);
     int found_alert = 0;
     for (int i = 0; i < zone->num_data; i++) {
-        data *d = &zone->daily_data[i];
+        data *d = &zone->daily_data[i]; //Se llama a la información guardada en el arreglo de la estructura aninada daily_data a la estructura zone, se declara otra variables de estructura para así realzar la comparación de cada contaminante de manera más optimizada
         int alerta = 0;
- 
         if (d->pm25 > 25 || d->pm10 > 50 || d->o3 > 100 || d->no2 > 200 || d->so2 > 20 || d->co > 10) {
             printf(" \x1B[33mFecha: %s\x1B[0m\n", d->date);
-            if (d->pm25 > 25) { 
+            if (d->pm25 > MAX_PM25) { // Analiza si algunos de los 30 días tiene una concnetración de pm25 mayor al límite establecido por la OMS
                 printf("  PM2.5: %.2f ug/m^3 (Limite: 25)\n", d->pm25); 
                 alerta = 1; 
             }
-            if (d->pm10 > 50) { 
+            if (d->pm10 > MAX_PM10) { // Analiza si algunos de los 30 días tiene una concnetración de pm10 mayor al límite establecido por la OMS
                 printf("  PM10: %.2f ug/m^3 (Limite: 50)\n", d->pm10); 
                 alerta = 1; 
             }
-            if (d->o3 > 100)  { 
+            if (d->o3 > MAX_O3)  { // Analiza si algunos de los 30 días tiene una concnetración de o3 mayor al límite establecido por la OMS
                 printf("  O3: %.2f ug/m^3 (Limite: 100)\n", d->o3); 
                 alerta = 1; 
             }
-            if (d->no2 > 200) { 
+            if (d->no2 > MAX_NO2) { // Analiza si algunos de los 30 días tiene una concnetración de no2 mayor al límite establecido por la OMS
                 printf("  NO2: %.2f ug/m^3 (Limite: 200)\n", d->no2); 
                 alerta = 1; 
             }
-            if (d->so2 > 20)  { 
+            if (d->so2 > MAX_SO2)  { // Analiza si algunos de los 30 días tiene una concnetración de so2 mayor al límite establecido por la OMS
                 printf("  SO2: %.2f ug/m^3 (Limite: 20)\n", d->so2); 
                 alerta = 1; 
             }
-            if (d->co > 10)   { 
+            if (d->co > MAX_CO)   { // Analiza si algunos de los 30 días tiene una concnetración de co mayor al límite establecido por la OMS
                 printf("  CO: %.2f mg/m^3 (Limite: 10)\n", d->co); 
                 alerta = 1; 
             }
-            if (alerta) {
+            if (alerta) { //Si se tiene un día con una contaminación alta se despliega esta alerta al usuario
                 printf(" Recomendacion: Evite actividades al aire libre. Use mascarilla si es necesario.\n\n");
                 found_alert = 1;
             }
@@ -357,21 +355,21 @@ void calcularPromedio(zone_data *zone){
     float suma_pm25 = 0, suma_pm10 = 0, suma_o3 = 0, suma_no2 = 0, suma_so2 = 0, suma_co = 0;
     float prom_suma_pm25 = 0, prom_suma_pm10 = 0, prom_suma_o3 = 0, prom_suma_no2 = 0, prom_suma_so2 = 0, prom_suma_co = 0;
     for(int i = 0; i < zone->num_data;i++)
-    {
-        suma_pm25 += zone->daily_data[i].pm25;
-        suma_pm10 += zone->daily_data[i].pm10;
-        suma_o3 += zone->daily_data[i].o3;
-        suma_no2 += zone->daily_data[i].no2;
-        suma_so2 += zone->daily_data[i].so2;
-        suma_co += zone->daily_data[i].co;
+    { //Se toma los últimos 30 días del monitoreo para calcular el promedio histórico 
+        suma_pm25 += zone->daily_data[i].pm25; //Se suma todos los datos registrados de pm25
+        suma_pm10 += zone->daily_data[i].pm10; //Se suma todos los datos registrados de pm10
+        suma_o3 += zone->daily_data[i].o3; //Se suma todos los datos registrados de o3
+        suma_no2 += zone->daily_data[i].no2; //Se suma todos los datos registrados de no2
+        suma_so2 += zone->daily_data[i].so2; //Se suma todos los datos registrados de so2
+        suma_co += zone->daily_data[i].co; //Se suma todos los datos registrados de co
     }
 
-    prom_suma_pm25 = suma_pm25 / zone->num_data;
-    prom_suma_pm10 = suma_pm10 / zone->num_data;
-    prom_suma_o3 = suma_o3 / zone->num_data;
-    prom_suma_no2 = suma_no2 / zone->num_data;
-    prom_suma_so2 = suma_so2 / zone->num_data;
-    prom_suma_co = suma_co / zone->num_data;
+    prom_suma_pm25 = suma_pm25 / zone->num_data; //Se calcula el promedio con la suma dividida para los 30 días
+    prom_suma_pm10 = suma_pm10 / zone->num_data; //Se calcula el promedio con la suma dividida para los 30 días
+    prom_suma_o3 = suma_o3 / zone->num_data; //Se calcula el promedio con la suma dividida para los 30 días
+    prom_suma_no2 = suma_no2 / zone->num_data; //Se calcula el promedio con la suma dividida para los 30 días
+    prom_suma_so2 = suma_so2 / zone->num_data; //Se calcula el promedio con la suma dividida para los 30 días
+    prom_suma_co = suma_co / zone->num_data; //Se calcula el promedio con la suma dividida para los 30 días
 
     printf("\n\x1B[36m--- PROMEDIOS HISTORICOS EN %s ---\x1B[0m\n", zone->zone_name);
     printf("Periodo de dias\n");
@@ -402,47 +400,47 @@ void generar_recomendaciones(zone_data *zone) {
     printf("==============================\n");
 
     for (int i = 0; i < zone->num_data; i++) {
-        data d = zone->daily_data[i];
+        data d = zone->daily_data[i]; //Se llama a la información guardada en el arreglo de la estructura aninada daily_data a la estructura zone, se declara otra variables de estructura para así realzar la comparación de cada contaminante de manera más optimizada
         int score = 0;
-        printf("\n\x1B[34mFecha: %s\x1B[0m\n", d.date);
+        printf("\n\x1B[34mFecha: %s\x1B[0m\n", d.date); //Se despliegan todos los días a diferencia de alertas donde solo los días con concentración de algún contaminante se muestra, y además se ofrece recomendaciones acerca de como disminuir la emición de los contaminantes
         printf("------------------------------\n");
-        if (d.pm25 > MAX_PM25) {
+        if (d.pm25 > MAX_PM25) { //Se analiza la contración de pm25, si es mayor al limite se despliega un alerta y la puntuaución de riesgo aumenta en paso de 2
             printf("  * Alta concentracion de PM2.5. Se recomienda usar mascarilla.\n");
             score += 2;
         }
-        if (d.pm10 > MAX_PM10) {
+        if (d.pm10 > MAX_PM10) {  //Se analiza la contración de pm10, si es mayor al limite se despliega un alerta y la puntuaución de riesgo aumenta en paso de 2
             printf("  * PM10 elevado. Evitar actividades al aire libre.\n");
             score += 2;
         }
-        if (d.o3 > MAX_O3) {
+        if (d.o3 > MAX_O3) {  //Se analiza la contración de o3, si es mayor al limite se despliega un alerta y la puntuaución de riesgo aumenta en paso de 1
             printf("  * Ozono alto. Use mascarilla para evitar enfermedades respiratorias.\n");
             score += 1;
         }
-        if (d.no2 > MAX_NO2) {
+        if (d.no2 > MAX_NO2) {  //Se analiza la contración de no2, si es mayor al limite se despliega un alerta y la puntuaución de riesgo aumenta en paso de 1
             printf("  * NO2 elevado. Riesgo respiratorio.\n");
             score += 1;
         }
-        if (d.so2 > MAX_SO2) {
+        if (d.so2 > MAX_SO2) {  //Se analiza la contración de so2, si es mayor al limite se despliega un alerta y la puntuaución de riesgo aumenta en paso de 2
             printf("  * SO2 peligroso. Permanecer en lugares internos.\n");
             score += 2;
         }
-        if (d.co > MAX_CO) {
+        if (d.co > MAX_CO) {  //Se analiza la contración de co, si es mayor al limite se despliega un alerta y la puntuaución de riesgo aumenta en paso de 2
             printf("  * CO alto. Mucha combustion cercana.\n");
             score += 2;
         }
 
-        if (score >= 6) {
+        if (score >= 6) { //Si la puntaución de riesgo es mayor o igual a 6 se declara como una alerta crítica y se despliega las posibles soluciones
             printf("\x1B[41m>> ALERTA CRITICA: Calidad del aire muy peligrosa.\x1B[0m\n");
             printf("  - Suspender todas las actividades al aire libre.\n");
             printf("  - Cierre temporal de industrias contaminantes.\n");
             printf("  - Implementar restricciones vehiculares estrictas.\n");
             printf("  - Promover confinamiento voluntario en zonas urbanas.\n");
-        } else if (score >= 3) {
+        } else if (score >= 3) { //Si la puntaución de riesgo es mayor o igual a 3 se declara como una alerta alta y se despliega las posibles soluciones
             printf("\x1B[43m>> ALERTA ALTA: Riesgo para la salud.\x1B[0m\n");
             printf("  - Reducir trafico vehicular (pico y placa ampliado).\n");
             printf("  - Limitar actividades al aire libre (escuelas y parques).\n");
             printf("  - Incentivar el teletrabajo y el transporte público.\n");
-        } else if (score > 0) {
+        } else if (score > 0) { //Si la puntaución de reisgo es mayor 0 se declara como una alerta moderada y se despliega las posibles soluciones
             printf("\x1B[103m>> ALERTA MODERADA: Precaucion necesaria.\x1B[0m\n");
             printf("  - Usar mascarilla si va a estar al aire libre mucho tiempo.\n");
             printf("  - Preferir espacios cerrados ventilados.\n");
