@@ -234,7 +234,6 @@ void prediccion_nivelesfuturo(zone_data *zone) {
     float prom_pm25, prom_pm10, prom_03, prom_no2, prom_so2, prom_co;
     float predic_pm25, predic_pm10, predic_o3, predic_no2, predic_so2, predic_co;
     int days_counted = 0;
-    
     printf("\x1b[33m\n\tPrediccion de niveles de contaminacion en 24 hora para %s\x1B[0m\n", zone->zone_name);
     do{
         printf("Ingrese la fecha a predecir (formato dia/mes/anio): ");
@@ -267,27 +266,30 @@ void prediccion_nivelesfuturo(zone_data *zone) {
             days_counted++;
         }
     }
-    
+    //Si no se posee información acerca de los últimos 30 días se despliega este mensaje
     if(days_counted == 0){
         printf("\x1B[33mNo se posee la cantidad de datos requeridos para realizar la prediccion\x1B[0m\n");
         return;
     }
-
+    //Cálculo de promedios hisdtóricos de los 30 días tomados para generar la predicción
     prom_pm25 = sum_pm25 / days_counted;
     prom_pm10 = sum_pm10 / days_counted;
     prom_03 = sum_03 / days_counted;
     prom_no2 = sum_no2 / days_counted;
     prom_so2 = sum_so2 / days_counted;
     prom_co = sum_co / days_counted;
-
-    predic_pm25 = prom_pm25 * (1 + (MAX_HUMIDITY/ 100.0 - MAX_VELVIENTO / 100.0));
-    predic_pm10 = prom_pm10 * (1 + (MAX_HUMIDITY / 120.0 - MAX_VELVIENTO / 90.0));
-    predic_o3 = prom_03 * (1 + (MAX_TEMPERATURA / 120.0 - MAX_VELVIENTO / 120.0));
-    predic_no2 = prom_no2 * (1 + (MAX_HUMIDITY/110.0));
-    predic_so2 = prom_so2 * (1 +(MAX_HUMIDITY / 130.0 - MAX_VELVIENTO / 80.0));
-    predic_co = prom_co * (1 + (MAX_HUMIDITY/150.0));
-
-    printf("\n\x1B[36mPrediccion de niveles de contaminacion para %s el %s:\x1B[0m\n", zone->zone_name, date_enter);
+    //Explicación sobre la fórmula de regresión lineal para la predicción
+    //La fórmula se compone de una variable dependiente, en este caso todas las variables predic, y variables independientes como la humedad, velocidad del viento y temperatura
+    //La estructura es la siguiente: Y = (Lineal histórico) * (Variables independientes);  el valor de 1 represente un (igual o aumento dependiendo del valor obtenido por las variables independientes)
+    //Cada que se vea un (+) significa que la variable global influye en un aumento de permanencia del contaminante, y viceversa, si se encuentra (-) significa que ese factor es un atenuador
+    predic_pm25 = prom_pm25 * (1 + (MAX_HUMIDITY/ 100.0 - MAX_VELVIENTO / 100.0)); //Para la partículas 2.5 las variables que aumentan su permanencia en el ambiente es la humedad de una zona y su atenuador es la velocidad del viento
+    predic_pm10 = prom_pm10 * (1 + (MAX_HUMIDITY / 120.0 - MAX_VELVIENTO / 90.0)); //Para la partículas 10 las variables que aumentan su permanencia en el ambiente es la humedad de una zona y su atenuador es la velocidad del viento
+    predic_o3 = prom_03 * (1 + (MAX_TEMPERATURA / 120.0 - MAX_VELVIENTO / 120.0)); //Para el ozono las variables que influyen en su permanencia es la temperatura y su atenuador es la velocidad del viento
+    predic_no2 = prom_no2 * (1 + (MAX_HUMIDITY/110.0)); //Para el dióxido de nitrógeno la variable que provoca su aumento es la humedad
+    predic_so2 = prom_so2 * (1 +(MAX_HUMIDITY / 130.0 - MAX_VELVIENTO / 80.0)); //Para el dióxido de azufre las variables que influyen en su permanencia es la humedad y su atenuador es la velocidad del viento
+    predic_co = prom_co * (1 + (MAX_HUMIDITY/150.0)); //Para el monóxido de carbono su variable que aumenta su permanencia es la humedad
+    //Los coeficientes presentas como divisores son coeficientes de sensibilidad los cuiales nos determinan que tanto impacto tiene un factor ambiental, si esta entre 80 y 150 tienen una influencia moderada, mayor a 150 son descartados y menor a 80 son los causantes
+    printf("\n\x1B[36mPrediccion de niveles de contaminacion para %s el %s:\x1B[0m\n", zone->zone_name, date_enter); //Despliegue en formato de tabla de los niveles de contaminación y predicción para la fecha deseada por el usuario
     printf("------------------------------------------------------------------\n");
     printf("|Contaminante\t| Nivel Actual\t\t|Prediccion en 24 horas\t|\n");
     printf("------------------------------------------------------------------\n");
